@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node Register_Score_API/backend/src/server.js",
-    "dev": "nodemon Register_Score_API/backend/src/server.js",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
     "build": "echo 'No build required'"
   },
   "dependencies": {
