@@ -46,8 +46,10 @@ router.get('/auth/twitter', async (req, res) => {
     }
 
     console.log('Starting Twitter OAuth flow...');
-    // Use proper backend callback URL for seamless OAuth flow
-    const callback_url = `http://localhost:3001/api/auth/twitter/callback`;
+    // Use dynamic callback URL based on environment
+    const callback_url = process.env.NODE_ENV === 'production' 
+      ? `https://madcatsuite-production-7b53.up.railway.app/api/auth/twitter/callback`
+      : `http://localhost:3001/api/auth/twitter/callback`;
     console.log('Callback URL:', callback_url);
     
     const requestData = {
