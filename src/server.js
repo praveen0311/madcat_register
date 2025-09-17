@@ -32,8 +32,6 @@ import express from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import userRoutes from './routes/users.js';
