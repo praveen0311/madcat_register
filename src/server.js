@@ -159,6 +159,50 @@ const options = {
         description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
       },
     ],
+    components: {
+      schemas: {
+        User: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'integer',
+              description: 'User ID'
+            },
+            twitter_id: {
+              type: 'string',
+              description: 'Twitter ID of the user'
+            },
+            twitter_username: {
+              type: 'string',
+              description: 'Twitter username'
+            },
+            twitter_name: {
+              type: 'string',
+              description: 'Twitter display name'
+            },
+            telegram_username: {
+              type: 'string',
+              description: 'Telegram username'
+            },
+            wallet_address: {
+              type: 'string',
+              description: 'Ethereum wallet address'
+            },
+            created_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Creation timestamp'
+            },
+            updated_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Last update timestamp'
+            }
+          },
+          required: ['twitter_id', 'telegram_username', 'wallet_address']
+        }
+      }
+    }
   },
   apis: [resolve(__dirname, 'routes', '*.js')],
 };
