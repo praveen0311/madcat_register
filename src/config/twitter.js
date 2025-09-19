@@ -42,7 +42,9 @@ function initializeTwitterConfig() {
   return true;
 }
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://poetic-pothos-ea5bb5.netlify.app'  // Your production frontend URL
+  : process.env.FRONTEND_URL || 'http://localhost:5173';
 
 export {
   initializeTwitterConfig,

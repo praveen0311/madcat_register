@@ -75,21 +75,20 @@ const authRateLimit = rateLimit({
 
 app.use(generalRateLimit);
 
-// CORS middleware - Single implementation with better session support
+// CORS middleware - Production-ready cross-domain session support
 app.use((req, res, next) => {
   console.log(`Request: ${req.method} ${req.path} from origin: ${req.headers.origin}`);
   
-  const allowedOrigins = process.env.CORS_ORIGINS ? 
-    process.env.CORS_ORIGINS.split(',').map(o => o.trim()) : 
-    ['http://localhost:5173', 'http://localhost:3000'];
+  const allowedOrigins = [
+    'http://localhost:5173', 
+    'http://localhost:3000',
+    'https://poetic-pothos-ea5bb5.netlify.app', // Your frontend URL
+    'https://madcatsuite-production-7b53.up.railway.app' // Your backend URL
+  ];
   
-  // In production, also allow your frontend URL and Railway domains
-  if (process.env.NODE_ENV === 'production') {
-    if (process.env.FRONTEND_URL) {
-      allowedOrigins.push(process.env.FRONTEND_URL);
-    }
-    // Allow all railway.app subdomains for health checks
-    allowedOrigins.push('https://madcatsuite-production-7b53.up.railway.app');
+  // Add custom origins from env
+  if (process.env.CORS_ORIGINS) {
+    allowedOrigins.push(...process.env.CORS_ORIGINS.split(',').map(o => o.trim()));
   }
   
   const origin = req.headers.origin;
@@ -98,24 +97,28 @@ app.use((req, res, next) => {
   const isAllowed = !origin || 
     allowedOrigins.includes(origin) || 
     (process.env.NODE_ENV !== 'production') ||
-    (origin && origin.includes('.railway.app'));
+    (origin && (origin.includes('.railway.app') || origin.includes('.netlify.app')));
   
   if (isAllowed) {
-    res.header('Access-Control-Allow-Origin', origin || allowedOrigins[0]);
+    res.header('Access-Control-Allow-Origin', origin || '*');
   } else {
     console.warn('CORS blocked origin:', origin);
+    // Still allow for Railway health checks
+    if (origin && origin.includes('.railway.app')) {
+      res.header('Access-Control-Allow-Origin', origin);
+    }
   }
   
   res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
-  res.header('Access-Control-Expose-Headers', 'Set-Cookie');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie, Set-Cookie');
+  res.header('Access-Control-Expose-Headers', 'Set-Cookie, Authorization');
   res.header('Vary', 'Origin');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS preflight request');
-    return res.status(200).end();
+    console.log('Handling OPTIONS preflight request for origin:', origin);
+    return res.status(204).end();
   }
   
   next();
@@ -125,18 +128,19 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Session middleware with improved OAuth flow support
+// Session middleware with cross-domain production support
 app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback-secret-for-dev-only',
   resave: false,
-  saveUninitialized: true, // Changed to true to handle OAuth flow
+  saveUninitialized: true, // Required for OAuth flow
   name: 'madcat_session',
   rolling: true, // Reset expiry on activity
   cookie: {
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    httpOnly: false, // Allow client-side access for OAuth debugging
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 30 * 60 * 1000, // 30 minutes - shorter for OAuth flow
+    httpOnly: false, // Allow client-side access for debugging
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Critical for cross-domain
+    maxAge: 60 * 60 * 1000, // 1 hour - longer for OAuth flow
+    domain: process.env.NODE_ENV === 'production' ? undefined : undefined // Let browser handle domain
   }
 }));
 

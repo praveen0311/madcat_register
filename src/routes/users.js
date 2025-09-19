@@ -38,6 +38,11 @@ const router = express.Router();
 // Twitter OAuth Flow
 router.get('/auth/twitter', async (req, res) => {
   try {
+    console.log('Starting Twitter OAuth flow...');
+    console.log('Initial session ID:', req.sessionID);
+    console.log('Origin:', req.headers.origin);
+    console.log('User-Agent:', req.headers['user-agent']);
+    
     // Check if we have valid Twitter API credentials
     if (!oauth) {
       return res.status(500).json({ 
@@ -45,7 +50,6 @@ router.get('/auth/twitter', async (req, res) => {
       });
     }
 
-    console.log('Starting Twitter OAuth flow...');
     // Use dynamic callback URL based on environment
     const callback_url = process.env.NODE_ENV === 'production' 
       ? `https://madcatsuite-production-7b53.up.railway.app/api/auth/twitter/callback`
@@ -94,9 +98,27 @@ router.get('/auth/twitter', async (req, res) => {
       throw new Error('Invalid response from Twitter');
     }
 
+    // Store OAuth secret in session
     req.session.oauth_token_secret = oauth_token_secret;
+    console.log('OAuth token secret stored in session:', !!req.session.oauth_token_secret);
+    console.log('Session ID after storing token:', req.sessionID);
+    
+    // Save session explicitly before sending response
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error during OAuth init:', err);
+          reject(err);
+        } else {
+          console.log('Session saved successfully during OAuth init');
+          resolve();
+        }
+      });
+    });
+
     const auth_url = `${TWITTER_AUTHORIZE_URL}?oauth_token=${oauth_token}`;
-    res.json({ auth_url });
+    console.log('Sending auth URL:', auth_url);
+    res.json({ auth_url, sessionId: req.sessionID });
   } catch (error) {
     console.error('OAuth initiation failed:', error);
     res.status(500).json({ error: error.message });
@@ -189,14 +211,29 @@ router.post('/auth/twitter/callback', async (req, res) => {
 router.get('/auth/twitter/callback', async (req, res) => {
   try {
     const { oauth_token, oauth_verifier } = req.query;
+    
+    console.log('OAuth callback received:');
+    console.log('- oauth_token:', oauth_token);
+    console.log('- oauth_verifier:', oauth_verifier);
+    console.log('- Session ID:', req.sessionID);
+    console.log('- Session exists:', !!req.session);
+    console.log('- Session oauth_token_secret:', !!req.session?.oauth_token_secret);
+    console.log('- Full session:', req.session);
+    console.log('- Cookie header:', req.headers.cookie);
+    console.log('- User-Agent:', req.headers['user-agent']);
+    console.log('- Origin:', req.headers.origin);
+    console.log('- Referer:', req.headers.referer);
 
     if (!oauth_token || !oauth_verifier) {
+      console.error('Missing OAuth parameters');
       return res.redirect(`${FRONTEND_URL}?error=missing_oauth_params`);
     }
 
-    const oauth_token_secret = req.session.oauth_token_secret;
+    const oauth_token_secret = req.session?.oauth_token_secret;
     if (!oauth_token_secret) {
-      return res.redirect(`${FRONTEND_URL}?error=invalid_session`);
+      console.error('Session validation failed - no oauth_token_secret in session');
+      console.log('Available session keys:', req.session ? Object.keys(req.session) : 'No session');
+      return res.redirect(`${FRONTEND_URL}?error=invalid_session&debug=no_oauth_secret&sessionId=${req.sessionID}`);
     }
 
     // Exchange for access token
@@ -258,6 +295,7 @@ router.get('/auth/twitter/callback', async (req, res) => {
     
     console.log('Twitter OAuth callback - received user data:', userData);
     console.log('Session ID before storing user:', req.sessionID);
+    console.log('Current session before storing:', req.session);
     
     // Store user data in session temporarily
     req.session.twitter_user = {
@@ -267,19 +305,29 @@ router.get('/auth/twitter/callback', async (req, res) => {
       profile_image: userData.profile_image_url_https
     };
     
-    console.log('User data stored in session:', req.session.twitter_user);
+    // Clear OAuth tokens after successful authentication
+    delete req.session.oauth_token_secret;
     
-    // Save session explicitly
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-      } else {
-        console.log('Session saved successfully');
-      }
+    console.log('User data stored in session:', req.session.twitter_user);
+    console.log('Full session after storing:', req.session);
+    
+    // Save session explicitly and wait for completion
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) {
+          console.error('Session save error:', err);
+          reject(err);
+        } else {
+          console.log('Session saved successfully');
+          resolve();
+        }
+      });
     });
 
-    // Redirect back to frontend with success
-    res.redirect(`${FRONTEND_URL}?auth=success`);
+    // Redirect back to frontend with success and session info
+    const redirectUrl = `${FRONTEND_URL}?auth=success&session=${req.sessionID}`;
+    console.log('Redirecting to:', redirectUrl);
+    res.redirect(redirectUrl);
   } catch (error) {
     console.error('Callback processing failed:', error);
     res.redirect(`${FRONTEND_URL}?error=callback_failed`);
@@ -569,23 +617,44 @@ router.get('/demo/user', (req, res) => {
   });
 });
 
-// Get authenticated user from session
+// Get authenticated user from session with enhanced debugging
 router.get('/auth/user', (req, res) => {
   console.log('GET /auth/user called');
   console.log('Session ID:', req.sessionID);
   console.log('Session data:', req.session);
-  console.log('Headers:', req.headers);
+  console.log('Cookie header:', req.headers.cookie);
+  console.log('Origin:', req.headers.origin);
   
-  if (req.session.twitter_user) {
+  if (req.session && req.session.twitter_user) {
     console.log('User found in session:', req.session.twitter_user);
     res.json({
       success: true,
-      user: req.session.twitter_user
+      user: req.session.twitter_user,
+      sessionId: req.sessionID
     });
   } else {
     console.log('No user found in session');
-    res.status(401).json({ error: 'No authenticated user' });
+    res.status(401).json({ 
+      error: 'No authenticated user',
+      sessionId: req.sessionID,
+      hasSession: !!req.session,
+      sessionKeys: req.session ? Object.keys(req.session) : []
+    });
   }
+});
+
+// Debug endpoint to check session status
+router.get('/auth/session-debug', (req, res) => {
+  res.json({
+    sessionId: req.sessionID,
+    hasSession: !!req.session,
+    sessionKeys: req.session ? Object.keys(req.session) : [],
+    hasTwitterUser: !!(req.session && req.session.twitter_user),
+    hasOauthSecret: !!(req.session && req.session.oauth_token_secret),
+    cookies: req.headers.cookie,
+    origin: req.headers.origin,
+    userAgent: req.headers['user-agent']
+  });
 });
 
 export default router;
