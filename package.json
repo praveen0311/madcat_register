@@ -19,7 +19,8 @@
     "oauth-1.0a": "^2.2.6",
     "pg": "^8.11.3",
     "validator": "^13.11.0",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "cors": "^2.8.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

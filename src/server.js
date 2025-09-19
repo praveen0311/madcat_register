@@ -75,7 +75,7 @@ const authRateLimit = rateLimit({
 
 app.use(generalRateLimit);
 
-// CORS middleware for production
+// CORS middleware - Single implementation with better session support
 app.use((req, res, next) => {
   console.log(`Request: ${req.method} ${req.path} from origin: ${req.headers.origin}`);
   
@@ -83,10 +83,13 @@ app.use((req, res, next) => {
     process.env.CORS_ORIGINS.split(',').map(o => o.trim()) : 
     ['http://localhost:5173', 'http://localhost:3000'];
   
-  // In production, also allow your frontend URL
-  if (process.env.NODE_ENV === 'production' && process.env.FRONTEND_URL) {
-    allowedOrigins.push(process.env.FRONTEND_URL);
-    allowedOrigins.push('https://*.railway.app');
+  // In production, also allow your frontend URL and Railway domains
+  if (process.env.NODE_ENV === 'production') {
+    if (process.env.FRONTEND_URL) {
+      allowedOrigins.push(process.env.FRONTEND_URL);
+    }
+    // Allow all railway.app subdomains for health checks
+    allowedOrigins.push('https://madcatsuite-production-7b53.up.railway.app');
   }
   
   const origin = req.headers.origin;
@@ -95,9 +98,7 @@ app.use((req, res, next) => {
   const isAllowed = !origin || 
     allowedOrigins.includes(origin) || 
     (process.env.NODE_ENV !== 'production') ||
-    allowedOrigins.some(allowed => 
-      allowed.includes('*') ? origin.includes(allowed.replace('*', '')) : false
-    );
+    (origin && origin.includes('.railway.app'));
   
   if (isAllowed) {
     res.header('Access-Control-Allow-Origin', origin || allowedOrigins[0]);
@@ -124,19 +125,33 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Session middleware with secure configuration for production
+// Session middleware with improved OAuth flow support
 app.use(session({
   secret: process.env.SESSION_SECRET || 'fallback-secret-for-dev-only',
   resave: false,
-  saveUninitialized: false, // Changed to false for production
+  saveUninitialized: true, // Changed to true to handle OAuth flow
   name: 'madcat_session',
+  rolling: true, // Reset expiry on activity
   cookie: {
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    httpOnly: true, // Prevent XSS
+    httpOnly: false, // Allow client-side access for OAuth debugging
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    maxAge: 30 * 60 * 1000, // 30 minutes - shorter for OAuth flow
   }
 }));
+
+// Session debugging middleware
+app.use((req, res, next) => {
+  if (req.path.includes('/auth/')) {
+    console.log('Session debug:', {
+      sessionId: req.sessionID,
+      hasOauthSecret: !!req.session.oauth_token_secret,
+      sessionKeys: Object.keys(req.session || {}),
+      cookies: req.headers.cookie
+    });
+  }
+  next();
+});
 
 // Apply auth rate limiting to auth endpoints
 app.use('/api/auth', authRateLimit);
