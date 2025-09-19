@@ -67,7 +67,7 @@ const generalRateLimit = rateLimit({
 
 const authRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 50,
   message: { error: 'Too many authentication attempts, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -77,21 +77,43 @@ app.use(generalRateLimit);
 
 // CORS middleware for production
 app.use((req, res, next) => {
+  console.log(`Request: ${req.method} ${req.path} from origin: ${req.headers.origin}`);
+  
   const allowedOrigins = process.env.CORS_ORIGINS ? 
-    process.env.CORS_ORIGINS.split(',') : 
-    ['http://localhost:5173'];
+    process.env.CORS_ORIGINS.split(',').map(o => o.trim()) : 
+    ['http://localhost:5173', 'http://localhost:3000'];
+  
+  // In production, also allow your frontend URL
+  if (process.env.NODE_ENV === 'production' && process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL);
+    allowedOrigins.push('https://*.railway.app');
+  }
   
   const origin = req.headers.origin;
   
-  if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+  // Check if origin is allowed
+  const isAllowed = !origin || 
+    allowedOrigins.includes(origin) || 
+    (process.env.NODE_ENV !== 'production') ||
+    allowedOrigins.some(allowed => 
+      allowed.includes('*') ? origin.includes(allowed.replace('*', '')) : false
+    );
+  
+  if (isAllowed) {
     res.header('Access-Control-Allow-Origin', origin || allowedOrigins[0]);
+  } else {
+    console.warn('CORS blocked origin:', origin);
   }
   
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
+  res.header('Access-Control-Expose-Headers', 'Set-Cookie');
+  res.header('Vary', 'Origin');
   
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS preflight request');
     return res.status(200).end();
   }
   
@@ -209,45 +231,6 @@ const options = {
 
 const specs = swaggerJsdoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-
-// Replace the existing CORS middleware (around line 170) with this:
-
-app.use((req, res, next) => {
-  console.log(`Request: ${req.method} ${req.path} from origin: ${req.headers.origin}`);
-  
-  // Allow origins based on environment
-  const allowedOrigins = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'https://your-frontend-domain.com' // Add your frontend domain when ready
-  ];
-  
-  // In production, also allow Railway health checks
-  if (process.env.NODE_ENV === 'production') {
-    allowedOrigins.push('https://*.railway.app');
-  }
-  
-  const origin = req.headers.origin;
-  if (!origin || allowedOrigins.some(allowed => 
-    allowed.includes('*') ? origin.includes(allowed.replace('*', '')) : allowed === origin
-  )) {
-    res.header('Access-Control-Allow-Origin', origin || 'http://localhost:5173');
-  }
-  
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
-  res.header('Access-Control-Expose-Headers', 'Set-Cookie');
-  res.header('Vary', 'Origin');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS preflight request');
-    return res.status(200).end();
-  }
-  
-  next();
-});
 
 // Start server
 const startServer = async () => {
