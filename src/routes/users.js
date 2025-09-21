@@ -46,8 +46,20 @@ router.get('/auth/twitter', async (req, res) => {
     }
 
     console.log('Starting Twitter OAuth flow...');
-    // Use proper backend callback URL for seamless OAuth flow
-    const callback_url = `http://localhost:3001/api/auth/twitter/callback`;
+    // Use environment-based callback URL for development/production
+    let baseUrl = process.env.NODE_ENV === 'production' 
+      ? process.env.BACKEND_URL || 'https://your-deployed-backend.onrender.com'
+      : 'http://localhost:3001';
+    
+    // Clean the base URL to avoid duplicates
+    baseUrl = baseUrl.replace(/\/+$/, ''); // Remove trailing slashes
+    if (baseUrl.includes('/api')) {
+      // If BACKEND_URL accidentally includes path, extract just the domain
+      baseUrl = baseUrl.split('/api')[0];
+    }
+    
+    const callback_url = `${baseUrl}/api/auth/twitter/callback`;
+    console.log('Base URL:', baseUrl);
     console.log('Callback URL:', callback_url);
     
     const requestData = {
