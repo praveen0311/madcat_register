@@ -156,7 +156,7 @@ const options = {
     servers: [
       {
         url: process.env.NODE_ENV === 'production' 
-          ? 'madcatsuite-production.up.railway.app'
+          ? 'https://madcatsuite-production-7b53.up.railway.app'
           : 'http://localhost:3001',
         description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
       },

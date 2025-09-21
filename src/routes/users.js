@@ -38,8 +38,13 @@ const router = express.Router();
 // Twitter OAuth Flow
 router.get('/auth/twitter', async (req, res) => {
   try {
+    console.log('🚀 Twitter OAuth endpoint hit');
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('Request headers:', req.headers);
+    
     // Check if we have valid Twitter API credentials
     if (!oauth) {
+      console.error('❌ OAuth not configured');
       return res.status(500).json({ 
         error: 'Twitter API credentials not configured. Please add TWITTER_API_KEY and TWITTER_API_SECRET to your environment variables.' 
       });
@@ -48,7 +53,7 @@ router.get('/auth/twitter', async (req, res) => {
     console.log('Starting Twitter OAuth flow...');
     // Use environment-based callback URL for development/production
     let baseUrl = process.env.NODE_ENV === 'production' 
-      ? process.env.BACKEND_URL || 'https://your-deployed-backend.onrender.com'
+      ? process.env.BACKEND_URL || 'https://madcatsuite-production-7b53.up.railway.app'
       : 'http://localhost:3001';
     
     // Clean the base URL to avoid duplicates
@@ -110,6 +115,7 @@ router.get('/auth/twitter', async (req, res) => {
     global.tempTokenStorage.set(oauth_token, oauth_token_secret);
     
     const auth_url = `${TWITTER_AUTHORIZE_URL}?oauth_token=${oauth_token}`;
+    console.log('✅ Generated auth_url:', auth_url);
     res.json({ auth_url });
   } catch (error) {
     console.error('OAuth initiation failed:', error);
