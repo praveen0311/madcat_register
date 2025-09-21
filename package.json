@@ -18,7 +18,8 @@
     "swagger-ui-express": "^5.0.0",
     "oauth": "^0.10.0",
     "pg": "^8.11.3",
-    "validator": "^13.11.0"
+    "validator": "^13.11.0",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
