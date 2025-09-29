@@ -28,9 +28,11 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Import other modules
+
 import express from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import cors from 'cors';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import userRoutes from './routes/users.js';
@@ -50,29 +52,30 @@ app.use((req, res, next) => {
   next();
 });
 
-// CORS middleware - must be first to handle preflight requests
-app.use((req, res, next) => {
-  console.log(`🔄 ${req.method} ${req.path} from origin: ${req.headers.origin}`);
-  
-  const origin = req.headers.origin;
-  
-  // Set CORS headers for all requests
-  res.header('Access-Control-Allow-Origin', origin || 'http://localhost:5173');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie, Cache-Control, X-Forwarded-For');
-  res.header('Access-Control-Allow-Credentials', 'false'); // Set to false since we don't use sessions
-  res.header('Access-Control-Max-Age', '86400');
-  res.header('Vary', 'Origin');
-  
-  // Handle preflight OPTIONS requests immediately and return success
-  if (req.method === 'OPTIONS') {
-    console.log('✅ OPTIONS preflight handled for:', req.path, 'from:', origin);
-    res.status(200).json({ message: 'CORS preflight successful' });
-    return;
+
+// CORS options: allow requests with no Origin (OAuth callback), restrict others
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like OAuth callbacks)
+    if (!origin) return callback(null, true);
+    // Allow only whitelisted origins for API endpoints
+    const allowed = process.env.CORS_ORIGINS?.split(',').map(o => o.trim());
+    if (allowed && allowed.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: false, // Set to true if you use cookies/sessions
+};
+
+// Apply CORS only to /api routes except /api/auth/twitter/callback
+app.use('/api', (req, res, next) => {
+  if (req.path === '/auth/twitter/callback') {
+    // Skip CORS for OAuth callback
+    return next();
   }
-  
-  console.log('➡️ Passing request to next middleware');
-  next();
+  // Apply CORS for other /api routes
+  return cors(corsOptions)(req, res, next);
 });
 
 // Security middleware
