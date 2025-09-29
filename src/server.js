@@ -1,9 +1,24 @@
   import dotenv from 'dotenv';
   import { fileURLToPath } from 'url';
   import { dirname, join } from 'path';
+  import cors from 'cors';
 
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
+
+  const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like OAuth callbacks)
+    if (!origin) return callback(null, true);
+    // Allow only whitelisted origins for API endpoints
+    const allowed = process.env.CORS_ORIGINS?.split(',').map(o => o.trim());
+    if (allowed && allowed.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+};
 
   // Load environment variables - try multiple paths for Railway
   const envPaths = [
