@@ -83,6 +83,7 @@ app.use((req, res, next) => {
     'http://localhost:5173', 
     'http://localhost:3000',
     'http://localhost:5000',
+    'https://cat.blockmintlabs.com',
     'https://poetic-pothos-ea5bb5.netlify.app', // Your frontend URL
     'https://madcatsuite-production-7b53.up.railway.app' // Your backend URL
   ];
