@@ -105,7 +105,7 @@ app.use((req, res, next) => {
     allowedOrigins.includes(origin) || 
     (process.env.NODE_ENV !== 'production') ||
     (origin && (origin.includes('.railway.app') || origin.includes('.netlify.app') || 
-                origin.includes('.vercel.app') || origin.includes('.herokuapp.com') ||
+                origin.includes('.vercel.app') || origin.includes('.herokuapp.com') || origin.includes('.blockmintlabs.com') ||
                 origin.includes('.render.com') || origin.includes('.github.io')));
   
   if (isAllowed) {
@@ -113,7 +113,7 @@ app.use((req, res, next) => {
   } else {
     console.warn('CORS blocked origin:', origin);
     // Still allow for common deployment platforms health checks
-    if (origin && (origin.includes('.railway.app') || origin.includes('.netlify.app') ||
+    if (origin && (origin.includes('.railway.app') || origin.includes('.netlify.app') || origin.includes('.blockmintlabs.com') ||
                   origin.includes('.vercel.app') || origin.includes('.herokuapp.com'))) {
       res.header('Access-Control-Allow-Origin', origin);
     }
