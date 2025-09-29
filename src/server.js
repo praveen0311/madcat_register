@@ -172,7 +172,7 @@
   const startServer = async () => {
     try {
       await initializeDatabase();
-      
+      const port = process.env.PORT || 3001;  
       // Railway requires binding to 0.0.0.0, not localhost
       const host = '0.0.0.0';
       
