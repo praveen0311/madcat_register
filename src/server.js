@@ -57,7 +57,7 @@
     const origin = req.headers.origin;
     
     // Set CORS headers for all requests
-    res.header('Access-Control-Allow-Origin', origin || 'http://localhost:5173');
+    res.header('Access-Control-Allow-Origin', origin || 'https://cat.blockmintlabs.com');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie, Cache-Control, X-Forwarded-For');
     res.header('Access-Control-Allow-Credentials', 'false'); // Set to false since we don't use sessions
