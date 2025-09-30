@@ -1,4 +1,9 @@
 // ...existing code...
+
+// ...existing code...
+
+// Place leaderboard endpoints after router is initialized and other routes
+const router = express.Router();
 /**
  * @swagger
  * /api/top-raiders:
@@ -146,7 +151,7 @@ import {
   FRONTEND_URL
 } from '../config/twitter.js';
 
-const router = express.Router();
+
 
 // Place leaderboard endpoints after router is initialized
 // Top Raiders (Mock Data, 10 records)
