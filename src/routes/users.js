@@ -1,3 +1,138 @@
+// ...existing code...
+/**
+ * @swagger
+ * /api/top-raiders:
+ *   get:
+ *     tags: [Leaderboard]
+ *     summary: Get top raiders
+ *     description: Returns the top 10 raiders with mock data
+ *     responses:
+ *       200:
+ *         description: List of top raiders
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       rank:
+ *                         type: integer
+ *                       raider:
+ *                         type: string
+ *                       score:
+ *                         type: integer
+ */
+router.get('/top-raiders', (req, res) => {
+  res.json({
+    data: [
+      { rank: 1, raider: 'RaiderAlpha', score: 980 },
+      { rank: 2, raider: 'RaiderBeta', score: 870 },
+      { rank: 3, raider: 'RaiderGamma', score: 820 },
+      { rank: 4, raider: 'RaiderDelta', score: 800 },
+      { rank: 5, raider: 'RaiderEpsilon', score: 780 },
+      { rank: 6, raider: 'RaiderZeta', score: 760 },
+      { rank: 7, raider: 'RaiderEta', score: 740 },
+      { rank: 8, raider: 'RaiderTheta', score: 720 },
+      { rank: 9, raider: 'RaiderIota', score: 700 },
+      { rank: 10, raider: 'RaiderKappa', score: 680 }
+    ]
+  });
+});
+
+/**
+ * @swagger
+ * /api/top-whales:
+ *   get:
+ *     tags: [Leaderboard]
+ *     summary: Get top whales
+ *     description: Returns the top 10 whales with mock data
+ *     responses:
+ *       200:
+ *         description: List of top whales
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       rank:
+ *                         type: integer
+ *                       raider:
+ *                         type: string
+ *                       score:
+ *                         type: integer
+ */
+router.get('/top-whales', (req, res) => {
+  res.json({
+    data: [
+      { rank: 1, raider: 'WhaleKing', score: 15000 },
+      { rank: 2, raider: 'WhaleQueen', score: 12000 },
+      { rank: 3, raider: 'WhalePrince', score: 11000 },
+      { rank: 4, raider: 'WhaleDuke', score: 10500 },
+      { rank: 5, raider: 'WhaleBaron', score: 10000 },
+      { rank: 6, raider: 'WhaleKnight', score: 9500 },
+      { rank: 7, raider: 'WhaleSquire', score: 9000 },
+      { rank: 8, raider: 'WhaleLord', score: 8500 },
+      { rank: 9, raider: 'WhaleMaster', score: 8000 },
+      { rank: 10, raider: 'WhaleRookie', score: 7500 }
+    ]
+  });
+});
+
+/**
+ * @swagger
+ * /api/loyalty-ranking:
+ *   get:
+ *     tags: [Leaderboard]
+ *     summary: Get loyalty ranking
+ *     description: Returns the top 10 loyalty ranking with mock data
+ *     responses:
+ *       200:
+ *         description: List of loyalty ranking
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       rank:
+ *                         type: integer
+ *                       raider:
+ *                         type: string
+ *                       score:
+ *                         type: integer
+ */
+router.get('/loyalty-ranking', (req, res) => {
+  res.json({
+    data: [
+      { rank: 1, raider: 'LoyalLion', score: 365 },
+      { rank: 2, raider: 'FaithfulFox', score: 340 },
+      { rank: 3, raider: 'SteadyStag', score: 320 },
+      { rank: 4, raider: 'DevotedDog', score: 310 },
+      { rank: 5, raider: 'TrueTiger', score: 300 },
+      { rank: 6, raider: 'ConstantCat', score: 290 },
+      { rank: 7, raider: 'ReliableRabbit', score: 280 },
+      { rank: 8, raider: 'PersistentPenguin', score: 270 },
+      { rank: 9, raider: 'EnduringEagle', score: 260 },
+      { rank: 10, raider: 'UnwaveringUrial', score: 250 }
+    ]
+  });
+});
+
+
+
 import express from 'express';
 import fetch from 'node-fetch';
 import { body, validationResult } from 'express-validator';
@@ -12,6 +147,61 @@ import {
 } from '../config/twitter.js';
 
 const router = express.Router();
+
+// Place leaderboard endpoints after router is initialized
+// Top Raiders (Mock Data, 10 records)
+router.get('/top-raiders', (req, res) => {
+  res.json({
+    data: [
+      { rank: 1, raider: 'RaiderAlpha', score: 980 },
+      { rank: 2, raider: 'RaiderBeta', score: 870 },
+      { rank: 3, raider: 'RaiderGamma', score: 820 },
+      { rank: 4, raider: 'RaiderDelta', score: 800 },
+      { rank: 5, raider: 'RaiderEpsilon', score: 780 },
+      { rank: 6, raider: 'RaiderZeta', score: 760 },
+      { rank: 7, raider: 'RaiderEta', score: 740 },
+      { rank: 8, raider: 'RaiderTheta', score: 720 },
+      { rank: 9, raider: 'RaiderIota', score: 700 },
+      { rank: 10, raider: 'RaiderKappa', score: 680 }
+    ]
+  });
+});
+
+// Top Whales (Mock Data, 10 records)
+router.get('/top-whales', (req, res) => {
+  res.json({
+    data: [
+      { rank: 1, raider: 'WhaleKing', score: 15000 },
+      { rank: 2, raider: 'WhaleQueen', score: 12000 },
+      { rank: 3, raider: 'WhalePrince', score: 11000 },
+      { rank: 4, raider: 'WhaleDuke', score: 10500 },
+      { rank: 5, raider: 'WhaleBaron', score: 10000 },
+      { rank: 6, raider: 'WhaleKnight', score: 9500 },
+      { rank: 7, raider: 'WhaleSquire', score: 9000 },
+      { rank: 8, raider: 'WhaleLord', score: 8500 },
+      { rank: 9, raider: 'WhaleMaster', score: 8000 },
+      { rank: 10, raider: 'WhaleRookie', score: 7500 }
+    ]
+  });
+});
+
+// Loyalty Ranking (Mock Data, 10 records)
+router.get('/loyalty-ranking', (req, res) => {
+  res.json({
+    data: [
+      { rank: 1, raider: 'LoyalLion', score: 365 },
+      { rank: 2, raider: 'FaithfulFox', score: 340 },
+      { rank: 3, raider: 'SteadyStag', score: 320 },
+      { rank: 4, raider: 'DevotedDog', score: 310 },
+      { rank: 5, raider: 'TrueTiger', score: 300 },
+      { rank: 6, raider: 'ConstantCat', score: 290 },
+      { rank: 7, raider: 'ReliableRabbit', score: 280 },
+      { rank: 8, raider: 'PersistentPenguin', score: 270 },
+      { rank: 9, raider: 'EnduringEagle', score: 260 },
+      { rank: 10, raider: 'UnwaveringUrial', score: 250 }
+    ]
+  });
+});
 
 /**
  * @swagger
