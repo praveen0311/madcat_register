@@ -17,11 +17,18 @@ function initializeTwitterConfig() {
   TWITTER_API_SECRET = process.env.TWITTER_API_SECRET;
   
   console.log('Initializing Twitter config...');
-  //console.log('TWITTER_API_KEY:', TWITTER_API_KEY ? 'FOUND' : 'NOT FOUND');
-  //console.log('TWITTER_API_SECRET:', TWITTER_API_SECRET ? 'FOUND' : 'NOT FOUND');
+  console.log('TWITTER_API_KEY:', TWITTER_API_KEY ? 'FOUND' : 'NOT FOUND');
+  console.log('TWITTER_API_SECRET:', TWITTER_API_SECRET ? 'FOUND' : 'NOT FOUND');
+  
+  // In production, log available environment variables for debugging
+  if (process.env.NODE_ENV === 'production') {
+    console.log('Available environment variables:', Object.keys(process.env).filter(key => 
+      key.includes('TWITTER') || key.includes('API')
+    ));
+  }
 
   if (!TWITTER_API_KEY || !TWITTER_API_SECRET) {
-    console.warn('Warning: Twitter API credentials not found. Using demo mode.');
+    console.warn('❌ Warning: Twitter API credentials not found. OAuth will not work.');
     return false;
   }
 
@@ -40,7 +47,7 @@ function initializeTwitterConfig() {
     }
   });
   
-  console.log('Twitter OAuth configured successfully');
+  console.log('✅ Twitter OAuth configured successfully');
   return true;
 }
 
