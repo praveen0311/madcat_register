@@ -37,8 +37,14 @@
   import { initializeDatabase } from './config/database.js';
   import { initializeTwitterConfig } from './config/twitter.js';
 
-  // Initialize Twitter configuration after environment variables are loaded
-  initializeTwitterConfig();
+
+  console.log('🔧 Initializing Twitter config...');
+  try {
+    initializeTwitterConfig();
+    console.log('✅ Twitter config initialized');
+  } catch (err) {
+    console.error('❌ Failed to initialize Twitter config:', err);
+  }
 
   const app = express();
   const port = process.env.PORT || 3001;
@@ -169,23 +175,35 @@
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
   // Start server
-  const startServer = async () => {
-    try {
-      await initializeDatabase();
-      
-      const port = process.env.PORT || 3001;      
-      // Railway requires binding to 0.0.0.0, not localhost
-      const host = '0.0.0.0';
-      
-      app.listen(port, host, () => {
-        console.log(`🚀 Server is running on ${host}:${port}`);
-        console.log(`📚 API Documentation: http://localhost:${port}/api-docs`);
-        console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      });
-    } catch (error) {
-      console.error('Failed to start server:', error);
-      process.exit(1);
-    }
-  };
+const startServer = async () => {
+  try {
+    console.log('🔧 Initializing database...');
+    await initializeDatabase();
+    console.log('✅ Database initialized');
+
+    const port = process.env.PORT || 3001;
+    // Railway requires binding to 0.0.0.0, not localhost
+    const host = '0.0.0.0';
+
+    app.listen(port, host, () => {
+      console.log(`🚀 Server is running on ${host}:${port}`);
+      console.log(`📚 API Documentation: http://localhost:${port}/api-docs`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+// Global error handlers for unhandled promise rejections and uncaught exceptions
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('UNHANDLED REJECTION:', reason);
+  process.exit(1);
+});
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err);
+  process.exit(1);
+});
 
   startServer();
